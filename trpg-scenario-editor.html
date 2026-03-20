@@ -20,6 +20,14 @@
 <meta name="author" content="九郎">
 <meta name="version" content="1.0.6">
 <meta name="contact" content="X: @show_CROWn">
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c4962a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TRPGエディタ">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>TRPG Scenario Editor</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -3749,6 +3757,39 @@ console.log(
   'color:#5a5448;font-size:11px;'
 );
 })(); // ── IIFE END ──
+</script>
+<!-- PWA：Service Worker 登録 -->
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg=>{
+        // 新しいバージョンが利用可能なとき更新通知を出す
+        reg.addEventListener('updatefound', ()=>{
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', ()=>{
+            if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
+              // 既存のアプリが動いている状態で新バージョンが来たとき
+              const toast = document.getElementById('toast');
+              const msgEl = document.getElementById('toast-msg');
+              const undoBtn = document.getElementById('toast-undo-btn');
+              if(msgEl) msgEl.textContent = '🔄 新しいバージョンが利用可能です';
+              if(undoBtn){
+                undoBtn.textContent = '今すぐ更新';
+                undoBtn.style.display = '';
+                undoBtn.onclick = ()=>{
+                  newWorker.postMessage('skipWaiting');
+                  window.location.reload();
+                };
+              }
+              if(toast) toast.className = 'show autosave';
+            }
+          });
+        });
+      })
+      .catch(()=>{/* Service Worker非対応環境では無視 */});
+  });
+}
 </script>
 </body>
 </html>
