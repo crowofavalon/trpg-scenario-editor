@@ -1,31 +1,33 @@
 // ============================================================
 //  LogosWeaver - Service Worker
-//  バージョン: 1.0.7
-//  制作者: 九郎
+//  制作者: 九郎 / ver 1.0.7
 // ============================================================
 
 const CACHE_NAME = 'logosweaver-v1.0.7';
 
-// キャッシュ対象ファイル
+// キャッシュするファイル
 const CACHE_FILES = [
   './LogosWeaver_full.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap',
 ];
 
-// ── インストール：キャッシュを事前に積む ──
+// ── インストール：キャッシュを作成 ──
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(CACHE_FILES).catch(err => {
-        // フォントなど外部リソースの失敗は無視してインストール続行
-        console.warn('[LogosWeaver SW] キャッシュ追加の一部失敗（続行）:', err);
+      // フォントなど外部リソースは失敗してもインストールを止めない
+      return cache.addAll(CACHE_FILES).catch(() => {
+        return Promise.all(
+          CACHE_FILES.map(url =>
+            cache.add(url).catch(() => {/* 失敗しても続行 */})
+          )
+        );
       });
     })
   );
-  // 新しいSWをすぐにアクティブにする（skipWaitingメッセージでも起動）
+  // 新しいSWをすぐにアクティブにする
   self.skipWaiting();
 });
 
@@ -36,12 +38,12 @@ self.addEventListener('activate', event => {
       Promise.all(
         keys
           .filter(key => key !== CACHE_NAME)
-          .map(key => {
-            console.log('[LogosWeaver SW] 古いキャッシュを削除:', key);
-            return caches.delete(key);
-          })
+          .map(key => caches.delete(key))
       )
-    ).then(() => self.clients.claim())
+    ).then(() => {
+      // 新しいSWをすべてのクライアントに即時適用
+      return self.clients.claim();
+    })
   );
 });
 
@@ -52,32 +54,36 @@ self.addEventListener('fetch', event => {
 
   event.respondWith(
     caches.match(event.request).then(cached => {
-      if (cached) return cached;
-
-      return fetch(event.request)
-        .then(response => {
-          // 有効なレスポンスのみキャッシュに追加
-          if (
-            response &&
-            response.status === 200 &&
-            response.type !== 'opaque'
-          ) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+      if (cached) {
+        // キャッシュがあればそれを返しつつ、バックグラウンドで更新を確認
+        const fetchPromise = fetch(event.request).then(response => {
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseClone);
+            });
           }
           return response;
-        })
-        .catch(() => {
-          // オフライン時にHTMLへのリクエストはメインページを返す
-          if (event.request.destination === 'document') {
-            return caches.match('./LogosWeaver_full.html');
-          }
+        }).catch(() => {/* オフライン時はそのままキャッシュを使う */});
+        return cached;
+      }
+      // キャッシュがなければネットワークから取得
+      return fetch(event.request).then(response => {
+        if (!response || response.status !== 200) return response;
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseClone);
         });
+        return response;
+      }).catch(() => {
+        // オフラインでもキャッシュがあればそれを返す
+        return caches.match('./LogosWeaver_full.html');
+      });
     })
   );
 });
 
-// ── メッセージ受信：skipWaiting（更新通知からの即時更新） ──
+// ── メッセージ：手動アップデート確認 ──
 self.addEventListener('message', event => {
   if (event.data === 'skipWaiting') {
     self.skipWaiting();
