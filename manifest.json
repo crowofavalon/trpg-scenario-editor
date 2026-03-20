@@ -1,5 +1,5 @@
 {
-  "name": "TRPG Scenario Editor",
+  "name": "LogosWeaver",
   "short_name": "TRPGエディタ",
   "description": "TRPGシナリオ制作専用エディタ",
   "start_url": "./trpg-scenario-editor.html",
