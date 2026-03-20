@@ -1,13 +1,13 @@
 {
   "name": "LogosWeaver",
-  "short_name": "TRPGエディタ",
-  "description": "TRPGシナリオ制作専用エディタ",
-  "start_url": "./trpg-scenario-editor.html",
+  "short_name": "LogosWeaver",
+  "description": "TRPGシナリオ制作に特化したWebエディタ",
+  "start_url": "./LogosWeaver_full.html",
   "display": "standalone",
-  "orientation": "any",
   "background_color": "#0d0f14",
   "theme_color": "#c4962a",
   "lang": "ja",
+  "orientation": "any",
   "icons": [
     {
       "src": "icon-192.png",
