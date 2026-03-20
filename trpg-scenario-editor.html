@@ -5,7 +5,7 @@
   ------------------------------------------------------------
   制作者 : 九郎
   連絡先 : X (@show_CROWn)
-  バージョン: 1.0.6
+  バージョン: 1.0.7
   ------------------------------------------------------------
   Copyright (c) 2026 九郎. All rights reserved.
   本ソフトウェアの無断転載・再配布・販売を禁じます。
@@ -18,7 +18,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="application-name" content="TRPG Scenario Editor">
 <meta name="author" content="九郎">
-<meta name="version" content="1.0.6">
+<meta name="version" content="1.0.7">
 <meta name="contact" content="X: @show_CROWn">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -2748,7 +2748,11 @@ body{font-family:'Crimson Pro',Georgia,serif;background:${pv.bgBase};color:${pv.
 </style></head><body>${bodyContent}</body></html>`;
 
   const win=window.open('','_blank');
-  if(!win){alert('ポップアップがブロックされました。ブラウザのポップアップ許可設定をご確認ください。');return;}
+  if(!win){
+    toast('⚠ ポップアップがブロックされています。ブラウザの設定でこのサイトのポップアップを許可してください。');
+    setTimeout(()=>{ document.getElementById('toast').className=''; }, 6000);
+    return;
+  }
   win.document.write(html);win.document.close();
   win.onload=()=>{ setTimeout(()=>win.print(),400); };
 }
@@ -3443,7 +3447,7 @@ function loadJSONFile(e){
       localStorage.setItem(AUTOSAVE_META_KEY, JSON.stringify({savedAt:new Date().toISOString(),scenarioName:S.scenarioName}));
       markClean();
       toast('読み込みました','ok');
-    }catch(err){ alert('読み込み失敗: '+err.message); }
+    }catch(err){ toast('⚠ 読み込み失敗: '+err.message); }
   };
   r.readAsText(f); e.target.value='';
 }
@@ -3553,8 +3557,11 @@ function printHandout(hoId){
   if(!ho)return;
   const idx=S.blocks.handout.items.indexOf(ho);
   const win=window.open('','_blank');
-  if(!win){alert('ポップアップがブロックされました。');return;}
-  win.document.write(buildHoPrintHTML([ho].map(h=>({...h,_idx:idx}))));
+  if(!win){
+    toast('⚠ ポップアップがブロックされています。ブラウザの設定でこのサイトのポップアップを許可してください。');
+    setTimeout(()=>{ document.getElementById('toast').className=''; }, 6000);
+    return;
+  }
   win.document.close();
   win.onload=()=>setTimeout(()=>win.print(),300);
 }
@@ -3563,8 +3570,11 @@ function printAllHandouts(){
   const items=S.blocks.handout.items;
   if(!items.length){toast('ハンドアウトがありません');return;}
   const win=window.open('','_blank');
-  if(!win){alert('ポップアップがブロックされました。');return;}
-  win.document.write(buildHoPrintHTML(items));
+  if(!win){
+    toast('⚠ ポップアップがブロックされています。ブラウザの設定でこのサイトのポップアップを許可してください。');
+    setTimeout(()=>{ document.getElementById('toast').className=''; }, 6000);
+    return;
+  }
   win.document.close();
   win.onload=()=>setTimeout(()=>win.print(),300);
 }
@@ -3667,12 +3677,12 @@ scTreeDrop = function(...a){ _origScTreeDrop.apply(this,a); markDirty(); };
 //  TRPG Scenario Editor
 //  制作者  : 九郎
 //  連絡先  : X (@show_CROWn)
-//  バージョン: 1.0.6
+//  バージョン: 1.0.7
 //  Copyright (c) 2026 九郎. All rights reserved.
 // ============================================================
 const TOOL_INFO = {
   name:    'TRPG Scenario Editor',
-  version: '1.0.6',
+  version: '1.0.7',
   author:  '九郎',
   contact: 'X: @show_CROWn',
 };
@@ -3747,7 +3757,7 @@ console.log(
   'font-size:18px;font-weight:bold;color:#c4962a;text-shadow:0 0 8px rgba(196,150,42,.6);'
 );
 console.log(
-  '%c制作者%c 九郎   %c連絡先%c X: @show_CROWn   %cver%c 1.0.6',
+  '%c制作者%c 九郎   %c連絡先%c X: @show_CROWn   %cver%c 1.0.7',
   'color:#5b7fa6;font-weight:bold;', 'color:#e8e0d0;',
   'color:#5b7fa6;font-weight:bold;', 'color:#e8e0d0;',
   'color:#5b7fa6;font-weight:bold;', 'color:#9a9080;'
