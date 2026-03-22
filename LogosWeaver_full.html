@@ -5,7 +5,7 @@
   ------------------------------------------------------------
   制作者 : 九郎
   連絡先 : X (@show_CROWn)
-  バージョン: 1.0.7
+  バージョン: 1.0.9
   ------------------------------------------------------------
   Copyright (c) 2026 九郎. All rights reserved.
   本ソフトウェアの無断転載・再配布・販売を禁じます。
@@ -18,7 +18,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="application-name" content="LogosWeaver">
 <meta name="author" content="九郎">
-<meta name="version" content="1.0.7">
+<meta name="version" content="1.0.9">
 <meta name="contact" content="X: @show_CROWn">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -71,6 +71,15 @@ body{font-family:'Crimson Pro',Georgia,serif;background:var(--bg-base);color:var
 .header-scenario-title:hover{color:var(--text-primary);border-color:var(--border);background:var(--bg-raised);}
 .header-actions{display:flex;gap:5px;align-items:center;}
 .toolbar-sep{width:1px;height:18px;background:var(--border);margin:0 3px;}
+/* ─── VERSION BADGE ─── */
+.header-version-badge{
+  font-size:.64rem;font-family:'JetBrains Mono',monospace;
+  padding:2px 7px;border-radius:8px;
+  border:1px solid var(--accent-dim);color:var(--accent);
+  background:var(--accent-glow);white-space:nowrap;
+  cursor:pointer;transition:all .15s;letter-spacing:.04em;
+}
+.header-version-badge:hover{background:var(--accent);color:var(--bg-base);}
 
 /* ─── BUTTONS ─── */
 .btn{font-family:'Crimson Pro',serif;font-size:.86rem;padding:5px 12px;border:1px solid var(--border);border-radius:4px;background:var(--bg-raised);color:var(--text-primary);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
@@ -681,6 +690,7 @@ body{font-family:'Crimson Pro',Georgia,serif;background:var(--bg-base);color:var
   .header-actions .btn:not(#sp-save-btn):not(#sp-load-btn):not(#theme-btn){display:none;}
   .header-actions .toolbar-sep{display:none;}
   #save-status{display:none;}
+  .header-version-badge{display:none;}
 
   /* スマホ用ヘッダーアクション */
   #sp-header-actions{display:flex;gap:5px;align-items:center;}
@@ -820,6 +830,7 @@ body{font-family:'Crimson Pro',Georgia,serif;background:var(--bg-base);color:var
 <header id="app-header">
   <div class="header-left">
     <div class="header-brand">⚔️ LogosWeaver</div>
+    <span id="header-version-badge" class="header-version-badge" onclick="openAppInfoModal()" title="アプリ情報">ver 1.0.9</span>
     <div class="header-scenario-title" id="header-scenario-title" title="ダッシュボードで変更" onclick="selBlock('dashboard');switchTab('blocks')">新しいシナリオ</div>
   </div>
   <div class="header-actions">
@@ -836,6 +847,7 @@ body{font-family:'Crimson Pro',Georgia,serif;background:var(--bg-base);color:var
     <button class="btn btn-sm" onclick="toggleSearch()" id="search-btn" title="全文検索 (Ctrl+F)">🔍 検索</button>
     <button class="btn btn-sm" onclick="openViewer()" title="閲覧モード">📖 閲覧</button>
     <button class="btn btn-sm btn-icon" onclick="showShortcutHelp()" title="キーボードショートカット (?)">⌨</button>
+    <button class="btn btn-sm btn-icon" onclick="openAppInfoModal()" title="アプリ情報">ℹ</button>
     <span class="toolbar-sep"></span>
     <button class="btn btn-icon btn-sm" id="theme-btn" onclick="toggleTheme()">☀️</button>
     <!-- スマホ専用ヘッダーボタン -->
@@ -1004,18 +1016,6 @@ body{font-family:'Crimson Pro',Georgia,serif;background:var(--bg-base);color:var
 <script>
 (()=>{  // ── IIFE START（グローバル汚染防止）──
 // ══════════════════════════════════════════
-//  版管理設定
-//  EDITION: 'trial' | 'friend' | 'full'
-// ══════════════════════════════════════════
-const EDITION = 'full';
-const LIMITS = {
-  trial:  { scenes:3,  npcs:5,  infos:5,  handouts:3,  image:false, export_txt:false, export_pdf:false },
-  friend: { scenes:10, npcs:10, infos:10, handouts:5,  image:false, export_txt:true,  export_pdf:true  },
-  full:   { scenes:Infinity, npcs:Infinity, infos:Infinity, handouts:Infinity, image:true, export_txt:true, export_pdf:true },
-};
-const LIM = LIMITS[EDITION];
-
-// ══════════════════════════════════════════
 //  DEFS & STATE
 // ══════════════════════════════════════════
 const BLOCK_DEFS=[
@@ -1173,6 +1173,7 @@ function blkDrop(e,k){
   e.preventDefault();document.querySelectorAll('.block-item').forEach(x=>x.classList.remove('drag-over','dragging'));
   if(!dragBlk||dragBlk===k)return;
   const a=S.blockOrder,fi=a.indexOf(dragBlk),ti=a.indexOf(k);
+  if(fi<0||ti<0)return;
   a.splice(fi,1);a.splice(ti,0,dragBlk);dragBlk=null;renderBlockList();
 }
 
@@ -1185,6 +1186,7 @@ function hoDrop(e,id){
   document.querySelectorAll('[data-hoid]').forEach(x=>x.classList.remove('drag-over'));
   if(!dragHo||dragHo===id)return;
   const a=S.blocks.handout.items,fi=a.findIndex(x=>x.id===dragHo),ti=a.findIndex(x=>x.id===id);
+  if(fi<0||ti<0)return;
   const[item]=a.splice(fi,1);a.splice(ti,0,item);dragHo=null;renderBlockList();
   if(S.sel.type==='block'&&S.sel.id==='handout')renderEditor();
 }
@@ -1198,6 +1200,7 @@ function scTreeDrop(e,id){
   document.querySelectorAll('[data-scid]').forEach(x=>x.classList.remove('drag-over'));
   if(!dragSc||dragSc===id)return;
   const a=S.blocks.honpen.scenes,fi=a.findIndex(x=>x.id===dragSc),ti=a.findIndex(x=>x.id===id);
+  if(fi<0||ti<0)return;
   const[item]=a.splice(fi,1);a.splice(ti,0,item);dragSc=null;renderBlockList();
   if(S.sel.type==='block'&&S.sel.id==='honpen')renderEditor();
   else if(S.sel.type==='scene')renderEditor();
@@ -1238,6 +1241,7 @@ function npcDrop(e,id){
   e.preventDefault();document.querySelectorAll('[data-nid]').forEach(x=>x.classList.remove('drag-over','dragging'));
   if(!dragNpc||dragNpc===id)return;
   const a=S.npcs,fi=a.findIndex(x=>x.id===dragNpc),ti=a.findIndex(x=>x.id===id);
+  if(fi<0||ti<0)return;
   const[item]=a.splice(fi,1);a.splice(ti,0,item);dragNpc=null;renderNpcList();
 }
 
@@ -1275,6 +1279,7 @@ function infoDrop(e,id){
   e.preventDefault();document.querySelectorAll('[data-iid]').forEach(x=>x.classList.remove('drag-over','dragging'));
   if(!dragInfo||dragInfo===id)return;
   const a=S.infos,fi=a.findIndex(x=>x.id===dragInfo),ti=a.findIndex(x=>x.id===id);
+  if(fi<0||ti<0)return;
   const[item]=a.splice(fi,1);a.splice(ti,0,item);dragInfo=null;renderInfoList();
 }
 
@@ -1325,7 +1330,7 @@ function renderDashboardEditor(tEl,bEl,cEl){
       <div class="field-group" style="margin-bottom:4px;">
         <label class="field-label">シナリオ名</label>
         <input class="field-input" style="font-size:1.05rem;font-weight:600;" value="${esc(S.scenarioName)}"
-          oninput="S.scenarioName=this.value;const ht=document.getElementById('header-scenario-title');if(ht)ht.textContent=this.value||'新しいシナリオ'">
+          oninput="updScenarioName(this.value)">
       </div>
     </div>
   </div>
@@ -1334,18 +1339,18 @@ function renderDashboardEditor(tEl,bEl,cEl){
     <div class="section-body">
       <div class="grid2">
         <div class="field-group"><label class="field-label">システム</label>
-          <input class="field-input" value="${esc(d.system)}" placeholder="例: クトゥルフ神話TRPG" oninput="S.blocks.dashboard.system=this.value">
+          <input class="field-input" value="${esc(d.system)}" placeholder="例: クトゥルフ神話TRPG" oninput="updDashboard('system',this.value)">
         </div>
         <div class="field-group"><label class="field-label">推奨参加人数</label>
-          <input class="field-input" value="${esc(d.players)}" placeholder="例: 3〜4人" oninput="S.blocks.dashboard.players=this.value">
+          <input class="field-input" value="${esc(d.players)}" placeholder="例: 3〜4人" oninput="updDashboard('players',this.value)">
         </div>
       </div>
       <div class="grid2">
         <div class="field-group"><label class="field-label">キャラクターレベル</label>
-          <input class="field-input" value="${esc(d.level)}" placeholder="例: 初期作成" oninput="S.blocks.dashboard.level=this.value">
+          <input class="field-input" value="${esc(d.level)}" placeholder="例: 初期作成" oninput="updDashboard('level',this.value)">
         </div>
         <div class="field-group"><label class="field-label">プレイ時間</label>
-          <input class="field-input" value="${esc(d.playtime)}" placeholder="例: 4〜6時間" oninput="S.blocks.dashboard.playtime=this.value">
+          <input class="field-input" value="${esc(d.playtime)}" placeholder="例: 4〜6時間" oninput="updDashboard('playtime',this.value)">
         </div>
       </div>
     </div>
@@ -1354,14 +1359,14 @@ function renderDashboardEditor(tEl,bEl,cEl){
     <div class="section-header">レギュレーション</div>
     <div class="section-body">
       <textarea class="auto-ta" rows="4" placeholder="ルール・制限事項・使用サプリメントなど..."
-        oninput="S.blocks.dashboard.regulation=this.value">${esc(d.regulation)}</textarea>
+        oninput="updDashboard('regulation',this.value)">${esc(d.regulation)}</textarea>
     </div>
   </div>
   <div class="section-card">
     <div class="section-header">今回予告</div>
     <div class="section-body">
       <textarea class="auto-ta" rows="5" placeholder="セッション開始前にプレイヤーに伝える予告文..."
-        oninput="S.blocks.dashboard.preview=this.value">${esc(d.preview)}</textarea>
+        oninput="updDashboard('preview',this.value)">${esc(d.preview)}</textarea>
     </div>
   </div>`;
   initAR(cEl);
@@ -1374,7 +1379,7 @@ function renderSimpleEditor(key,el){
   el.innerHTML=`<div class="section-card">
     <div class="section-header">${def.label}</div>
     <div class="section-body">
-      <textarea class="auto-ta" rows="6" oninput="S.blocks['${key}'].content=this.value">${esc(val)}</textarea>
+      <textarea class="auto-ta" rows="6" oninput="updSimpleBlock('${key}',this.value)">${esc(val)}</textarea>
     </div>
   </div>`;
   initAR(el);
@@ -1703,11 +1708,12 @@ function updScene(id,f,v){const sc=S.blocks.honpen.scenes.find(x=>x.id===id);if(
 function updIB(scId,ibId,v){const sc=S.blocks.honpen.scenes.find(x=>x.id===scId);if(!sc)return;const ib=sc.inlineBlocks.find(x=>x.id===ibId);if(ib)ib.content=v;}
 function updNpc(id,f,v){const n=S.npcs.find(x=>x.id===id);if(n)n[f]=v;}
 function updInfo(id,f,v){const inf=S.infos.find(x=>x.id===id);if(inf)inf[f]=v;}
+// ダッシュボード・シンプルブロック用（oninput属性はグローバルスコープで実行されるためS.xxxを直接参照できない）
+function updDashboard(f,v){S.blocks.dashboard[f]=v;}
+function updScenarioName(v){S.scenarioName=v;const ht=document.getElementById('header-scenario-title');if(ht)ht.textContent=v||'新しいシナリオ';}
+function updSimpleBlock(key,v){S.blocks[key].content=v;}
 
 function addHandout(){
-  if(S.blocks.handout.items.length>=LIM.handouts){
-    toast(`⚠ この版ではハンドアウトは最大${LIM.handouts}枚までです`);return;
-  }
   const ho={id:uid(),name:'',connection:'',condition:'',body:'',goal:''};
   S.blocks.handout.items.push(ho);
   S.treeOpen.handout=true;
@@ -1766,9 +1772,6 @@ function delHandout(id){
   });
 }
 function addScene(){
-  if(S.blocks.honpen.scenes.length>=LIM.scenes){
-    toast(`⚠ この版ではシーンは最大${LIM.scenes}つまでです`);return;
-  }
   const sc={id:uid(),title:'新しいシーン',location:'',goal:'',npcIds:[],inlineBlocks:[],memo:'',status:'todo',collapsed:false};
   S.blocks.honpen.scenes.push(sc);
   S.treeOpen.honpen=true;
@@ -1910,7 +1913,6 @@ function addIB(scId,type){
 
 // ── NPC画像 ──
 function triggerNpcImageUpload(npcId){
-  if(!LIM.image){toast('⚠ この版では画像の追加はできません（有料版の機能です）');return;}
   document.getElementById('npc-img-input-'+npcId)?.click();
 }
 function loadNpcImage(e, npcId){
@@ -1948,7 +1950,6 @@ function clearNpcImage(npcId){
 
 // ── IB画像（資料ブロック）──
 function triggerIBImageUpload(scId, ibId){
-  if(!LIM.image){toast('⚠ この版では画像の追加はできません（有料版の機能です）');return;}
   document.getElementById('ib-img-input-'+ibId)?.click();
 }
 function loadIBImage(e, scId, ibId){
@@ -2071,6 +2072,7 @@ function scEditorDrop(e,id){
   e.preventDefault();document.querySelectorAll('.scene-card').forEach(x=>x.classList.remove('drag-over','dragging'));
   if(!dragScEd||dragScEd===id)return;
   const a=S.blocks.honpen.scenes,fi=a.findIndex(x=>x.id===dragScEd),ti=a.findIndex(x=>x.id===id);
+  if(fi<0||ti<0)return;
   const[item]=a.splice(fi,1);a.splice(ti,0,item);dragScEd=null;renderBlockList();renderEditor();
 }
 
@@ -2083,6 +2085,7 @@ function ibDrop(e,scId,ibId){
   if(!dragIB.ibId||dragIB.ibId===ibId||dragIB.scId!==scId)return;
   const sc=S.blocks.honpen.scenes.find(x=>x.id===scId);if(!sc)return;
   const fi=sc.inlineBlocks.findIndex(x=>x.id===dragIB.ibId),ti=sc.inlineBlocks.findIndex(x=>x.id===ibId);
+  if(fi<0||ti<0)return;
   const[item]=sc.inlineBlocks.splice(fi,1);sc.inlineBlocks.splice(ti,0,item);
   dragIB={scId:null,ibId:null};
   const ie=document.getElementById('ie-'+scId);
@@ -2246,9 +2249,6 @@ function confirmModal(message, onOk, okLabel='削除する', dangerStyle=true){
 }
 
 function openAddNpcModal(){
-  if(S.npcs.length>=LIM.npcs){
-    toast(`⚠ この版ではNPCは最大${LIM.npcs}人までです`);return;
-  }
   openModal('NPCを追加',`
     <div class="field-group"><label class="field-label">NPC名</label><input class="field-input" id="m-name" placeholder="キャラクター名"></div>
     <div class="grid2">
@@ -2264,9 +2264,6 @@ function openAddNpcModal(){
   });
 }
 function openAddInfoModal(){
-  if(S.infos.length>=LIM.infos){
-    toast(`⚠ この版では情報は最大${LIM.infos}件までです`);return;
-  }
   openModal('情報を追加',`<div class="field-group"><label class="field-label">名称</label><input class="field-input" id="m-iname" placeholder="情報名"></div>`,'追加',()=>{
     const name=document.getElementById('m-iname').value.trim()||'名無しの情報';
     const id=uid();
@@ -2458,26 +2455,13 @@ async function overwriteSave(){
 //  EXPORT MODAL
 // ══════════════════════════════════════════
 function openExportModal(){
-  // ── 版制限チェック ──
-  if(!LIM.export_txt && !LIM.export_pdf){
-    openModal('エクスポート制限',`
-      <div class="empty-state" style="min-height:80px;">
-        <div class="empty-icon">📤</div>
-        <div class="empty-title">この版ではエクスポートできません</div>
-        <div class="empty-sub">有料版にアップグレードするとMarkdown・テキスト・PDF出力が使えます。</div>
-      </div>`,'閉じる',()=>closeModal(),true);
-    document.getElementById('modal-foot').style.display='';
-    document.getElementById('modal-ok').textContent='閉じる';
-    document.getElementById('modal-ok').onclick=()=>closeModal();
-    return;
-  }
-
   const supportsFilePicker = typeof window.showSaveFilePicker === 'function';
   const hint = supportsFilePicker
     ? '保存先を選ぶダイアログが開きます。'
     : '※ このブラウザはネイティブ保存ダイアログ非対応のため、ダウンロードフォルダへ保存されます。保存先を変えるにはブラウザのダウンロード設定で「保存前に場所を確認する」を有効にしてください。（PDFはブラウザの印刷ダイアログから保存先を選択できます）';
 
-  const mdOption = LIM.export_txt && EDITION==='full' ? `
+  openModal('エクスポート',`
+    <div class="export-opts">
       <label class="export-opt selected">
         <input type="radio" class="export-radio" name="expfmt" value="md" checked>
         <span class="export-opt-icon">📝</span>
@@ -2485,16 +2469,9 @@ function openExportModal(){
           <div class="export-opt-name">Markdown</div>
           <div class="export-opt-desc">見出し・書式付きテキスト (.md)</div>
         </div>
-      </label>` : '';
-
-  const txtChecked = EDITION !== 'full' ? 'checked' : '';
-  const txtSelected = EDITION !== 'full' ? ' selected' : '';
-
-  openModal('エクスポート',`
-    <div class="export-opts">
-      ${mdOption}
-      <label class="export-opt${txtSelected}">
-        <input type="radio" class="export-radio" name="expfmt" value="txt" ${txtChecked}>
+      </label>
+      <label class="export-opt">
+        <input type="radio" class="export-radio" name="expfmt" value="txt">
         <span class="export-opt-icon">📄</span>
         <div class="export-opt-info">
           <div class="export-opt-name">テキスト</div>
@@ -2514,12 +2491,12 @@ function openExportModal(){
       <label class="field-label">ファイル名</label>
       <div class="save-filename">
         <input class="field-input" id="exp-fname" value="${esc(safeFilename(S.scenarioName))}" placeholder="ファイル名">
-        <span id="exp-ext">${EDITION==='full'?'.md':'.txt'}</span>
+        <span id="exp-ext">.md</span>
       </div>
     </div>
     <p style="font-size:.8rem;color:var(--text-muted);line-height:1.5;" id="exp-hint">${hint}</p>`,
   'エクスポート', async ()=>{
-    const fmt = document.querySelector('input[name="expfmt"]:checked')?.value || (EDITION==='full'?'md':'txt');
+    const fmt = document.querySelector('input[name="expfmt"]:checked')?.value || 'md';
     const fname = document.getElementById('exp-fname').value.trim() || safeFilename(S.scenarioName);
     closeModal();
     if(fmt === 'pdf'){ exportPDF(); return; }
@@ -3200,6 +3177,7 @@ function openSpMoreMenu(){
       <button class="btn" style="justify-content:flex-start;gap:10px;" onclick="closeModal();openExportModal()">📤 エクスポート</button>
       <hr style="border:none;border-top:1px solid var(--border);margin:2px 0;">
       <button class="btn" style="justify-content:flex-start;gap:10px;" onclick="closeModal();showShortcutHelp()">⌨ ショートカット</button>
+      <button class="btn" style="justify-content:flex-start;gap:10px;" onclick="closeModal();openAppInfoModal()">ℹ アプリ情報</button>
     </div>
   `, '閉じる', ()=>closeModal(), true);
   document.getElementById('modal-foot').style.display='';
@@ -3236,10 +3214,10 @@ closeViewer = ()=>{ _origCloseViewer(); };
 
 // ══════════════════════════════════════════
 // ══════════════════════════════════════════
-const AUTOSAVE_KEY = 'trpg_editor_autosave';
-const AUTOSAVE_META_KEY = 'trpg_editor_autosave_meta';
+const AUTOSAVE_KEY = 'logos_weaver_autosave';
+const AUTOSAVE_META_KEY = 'logos_weaver_autosave_meta';
 const AUTOSAVE_INTERVAL_MS = 30000;
-const SNAPSHOT_KEY = 'trpg_editor_snapshots';
+const SNAPSHOT_KEY = 'logos_weaver_snapshots';
 const SNAPSHOT_MAX = 5;
 let _isDirty = false;
 let _autosaveTimer = null;
@@ -3470,12 +3448,6 @@ document.addEventListener('input', () => markDirty());
 // ─── ドラッグ・追加・削除などの構造変更でも dirty にする ───
 // renderAll/renderBlockList など呼び出し後に markDirty するために
 // データ変更を伴う主要関数をラップ
-const _structureMutations = [
-  'addHandout','delHandout','addScene','delScene',
-  'addSceneNpc','removeSceneNpc','addIB','delIB',
-  'delNpc','delInfo',
-];
-// これらは関数定義済みなのでinitで後掛けする
 
 function loadJSON(){document.getElementById('load-input').click();}
 function loadJSONFile(e){
@@ -3608,6 +3580,7 @@ function printHandout(hoId){
     setTimeout(()=>{ document.getElementById('toast').className=''; }, 6000);
     return;
   }
+  win.document.write(buildHoPrintHTML([ho]));
   win.document.close();
   win.onload=()=>setTimeout(()=>win.print(),300);
 }
@@ -3621,6 +3594,7 @@ function printAllHandouts(){
     setTimeout(()=>{ document.getElementById('toast').className=''; }, 6000);
     return;
   }
+  win.document.write(buildHoPrintHTML(items));
   win.document.close();
   win.onload=()=>setTimeout(()=>win.print(),300);
 }
@@ -3690,45 +3664,51 @@ function showShortcutHelp(){
   document.getElementById('modal-ok').onclick=()=>closeModal();
 }
 
+function openAppInfoModal(){
+  const edLabel = typeof EDITION !== 'undefined'
+    ? ({trial:'体験版', friend:'友人版', full:'製品版'}[EDITION] || EDITION)
+    : '製品版';
+  openModal('アプリ情報',`
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div style="text-align:center;padding:8px 0 4px;">
+        <div style="font-family:'Cinzel',serif;font-size:1.3rem;color:var(--accent);letter-spacing:.1em;margin-bottom:4px;">⚔️ LogosWeaver</div>
+        <div style="display:flex;justify-content:center;gap:8px;align-items:center;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.8rem;padding:2px 10px;border-radius:8px;border:1px solid var(--accent-dim);color:var(--accent);background:var(--accent-glow);">ver ${TOOL_INFO.version}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.8rem;padding:2px 10px;border-radius:8px;border:1px solid var(--border-bright);color:var(--text-secondary);background:var(--bg-raised);">${edLabel}</span>
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:.88rem;">
+        <tr><td style="padding:6px 12px 6px 0;color:var(--text-muted);font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;">制作者</td><td style="padding:6px 0;color:var(--text-primary);">${TOOL_INFO.author}</td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:var(--text-muted);font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;">連絡先</td><td style="padding:6px 0;color:var(--text-primary);">${TOOL_INFO.contact}</td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:var(--text-muted);font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;">動作環境</td><td style="padding:6px 0;color:var(--text-secondary);font-size:.82rem;">Chrome / Edge 推奨</td></tr>
+      </table>
+      <div style="font-size:.74rem;color:var(--text-muted);text-align:center;border-top:1px solid var(--border);padding-top:10px;line-height:1.6;">
+        © 2026 九郎. All rights reserved.<br>
+        本ソフトウェアの無断転載・再配布・販売を禁じます。
+      </div>
+    </div>
+  `,'閉じる',()=>closeModal(),true);
+  document.getElementById('modal-foot').style.display='';
+  document.getElementById('modal-ok').textContent='閉じる';
+  document.getElementById('modal-ok').onclick=()=>closeModal();
+}
+
 function renderAll(){
   renderBlockList();renderNpcList();renderInfoList();renderEditor();
   const ht=document.getElementById('header-scenario-title');
   if(ht) ht.textContent=S.scenarioName||'新しいシナリオ';
 }
 
-// ─── 構造変更関数の dirty ラップ ───
-// drag sort など input イベントを発火しない操作をカバー
-['addHandout','addScene',
- 'addSceneNpc','removeSceneNpc','addIB','delIB'].forEach(fn=>{
-  const orig = window[fn];
-  if(typeof orig==='function'){
-    window[fn] = function(...args){ const r=orig.apply(this,args); markDirty(); return r; };
-  }
-});
-// blockOrder/npc/info drag sort もdirty化（blkDrop等から呼ばれるrenderBlockListの後）
-const _origBlkDrop = blkDrop;
-blkDrop = function(...a){ _origBlkDrop.apply(this,a); markDirty(); };
-const _origNpcDrop = npcDrop;
-npcDrop = function(...a){ _origNpcDrop.apply(this,a); markDirty(); };
-const _origInfoDrop = infoDrop;
-infoDrop = function(...a){ _origInfoDrop.apply(this,a); markDirty(); };
-const _origScEditorDrop = scEditorDrop;
-scEditorDrop = function(...a){ _origScEditorDrop.apply(this,a); markDirty(); };
-const _origHoDrop = hoDrop;
-hoDrop = function(...a){ _origHoDrop.apply(this,a); markDirty(); };
-const _origScTreeDrop = scTreeDrop;
-scTreeDrop = function(...a){ _origScTreeDrop.apply(this,a); markDirty(); };
-
 // ============================================================
 //  LogosWeaver
 //  制作者  : 九郎
 //  連絡先  : X (@show_CROWn)
-//  バージョン: 1.0.7
+//  バージョン: 1.0.9
 //  Copyright (c) 2026 九郎. All rights reserved.
 // ============================================================
 const TOOL_INFO = {
   name:    'LogosWeaver',
-  version: '1.0.7',
+  version: '1.0.9',
   author:  '九郎',
   contact: 'X: @show_CROWn',
 };
@@ -3756,6 +3736,8 @@ checkAutosave();
 Object.assign(window, {
   // ブロック選択
   selBlock, selHo, selScene, selNpc, selInfo,
+  // ダッシュボード・シンプルブロック更新
+  updDashboard, updScenarioName, updSimpleBlock,
   // ブロック操作
   switchTab, toggleTheme, openViewer, closeViewer,
   toggleSearch, doSearch, searchKeyNav,
@@ -3785,17 +3767,39 @@ Object.assign(window, {
   triggerNpcImageUpload, loadNpcImage, clearNpcImage,
   triggerIBImageUpload, loadIBImage, clearIBImage,
   // モーダル
-  openModal, closeModal, openSaveModal, showShortcutHelp,
+  openModal, closeModal, showShortcutHelp, openAppInfoModal,
   restoreAutosave, dismissRestore,
   openSnapshotModal, restoreSnapshot,
   // ポップアップ
   showNpcPopup, scheduleHidePopup, jumpToNpcFromPopup,
   // スマホ
   toggleSpSidebar, closeSpSidebar, spNavTo, openSpMoreMenu,
-  // NPC tag
-  openNpcTagMenu: undefined, insertNpcTag: undefined,
+  // NPC tag（将来実装予定）
   updIBSpeaker,
 });
+
+// ─── 構造変更関数の dirty ラップ ───
+// Object.assign(window,...) の後に実行することで window[fn] が確実に存在する
+['addHandout','addScene',
+ 'addSceneNpc','removeSceneNpc','addIB','delIB'].forEach(fn=>{
+  const orig = window[fn];
+  if(typeof orig==='function'){
+    window[fn] = function(...args){ const r=orig.apply(this,args); markDirty(); return r; };
+  }
+});
+// blockOrder/npc/info drag sort もdirty化
+const _origBlkDrop = blkDrop;
+blkDrop = function(...a){ _origBlkDrop.apply(this,a); markDirty(); };
+const _origNpcDrop = npcDrop;
+npcDrop = function(...a){ _origNpcDrop.apply(this,a); markDirty(); };
+const _origInfoDrop = infoDrop;
+infoDrop = function(...a){ _origInfoDrop.apply(this,a); markDirty(); };
+const _origScEditorDrop = scEditorDrop;
+scEditorDrop = function(...a){ _origScEditorDrop.apply(this,a); markDirty(); };
+const _origHoDrop = hoDrop;
+hoDrop = function(...a){ _origHoDrop.apply(this,a); markDirty(); };
+const _origScTreeDrop = scTreeDrop;
+scTreeDrop = function(...a){ _origScTreeDrop.apply(this,a); markDirty(); };
 
 // ─── 方法C：コンソールに制作者情報を表示 ───
 console.log(
@@ -3803,7 +3807,7 @@ console.log(
   'font-size:18px;font-weight:bold;color:#c4962a;text-shadow:0 0 8px rgba(196,150,42,.6);'
 );
 console.log(
-  '%c制作者%c 九郎   %c連絡先%c X: @show_CROWn   %cver%c 1.0.7',
+  '%c制作者%c 九郎   %c連絡先%c X: @show_CROWn   %cver%c 1.0.9',
   'color:#5b7fa6;font-weight:bold;', 'color:#e8e0d0;',
   'color:#5b7fa6;font-weight:bold;', 'color:#e8e0d0;',
   'color:#5b7fa6;font-weight:bold;', 'color:#9a9080;'
@@ -3814,7 +3818,7 @@ console.log(
 );
 })(); // ── IIFE END ──
 </script>
-<!-- PWA：Service Worker 登録 (LogosWeaver) -->
+<!-- PWA：Service Worker 登録 -->
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
