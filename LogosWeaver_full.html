@@ -983,7 +983,7 @@ body{font-family:'Crimson Pro',Georgia,serif;background:var(--bg-base);color:var
     <div class="modal-head"><span id="modal-title"></span><button class="mini-btn" onclick="closeModal()">✕</button></div>
     <div class="modal-body" id="modal-body"></div>
     <div class="modal-foot" id="modal-foot">
-      <button class="btn" onclick="closeModal()">キャンセル</button>
+      <button class="btn" id="modal-cancel" onclick="closeModal()">キャンセル</button>
       <button class="btn btn-accent" id="modal-ok">OK</button>
     </div>
   </div>
@@ -2216,6 +2216,8 @@ function switchTab(name,btn){
 //  MODALS
 // ══════════════════════════════════════════
 function openModal(title,bodyHTML,okLabel,onOk,hideFoot=false){
+  const cancelBtn=document.getElementById('modal-cancel');
+  if(cancelBtn) cancelBtn.style.display='';
   document.getElementById('modal-title').textContent=title;
   document.getElementById('modal-body').innerHTML=bodyHTML;
   document.getElementById('modal-ok').textContent=okLabel;
@@ -2244,6 +2246,8 @@ function confirmModal(message, onOk, okLabel='削除する', dangerStyle=true){
     okBtn.style.borderColor = '';
     okBtn.style.color = '';
   }
+  const cancelBtnC=document.getElementById('modal-cancel');
+  if(cancelBtnC) cancelBtnC.style.display='';
   document.getElementById('modal-foot').style.display = '';
   document.getElementById('modal-overlay').classList.add('open');
 }
@@ -3181,6 +3185,7 @@ function openSpMoreMenu(){
     </div>
   `, '閉じる', ()=>closeModal(), true);
   document.getElementById('modal-foot').style.display='';
+  document.getElementById('modal-cancel').style.display='none';
   document.getElementById('modal-ok').textContent='閉じる';
   document.getElementById('modal-ok').onclick=()=>closeModal();
   // 上書きボタンの有効/無効（iOSは常に有効）
@@ -3276,6 +3281,7 @@ function openSnapshotModal(){
         <div class="empty-sub">上書き保存の履歴がありません。<br>上書き保存を行うと、直前の状態が最大${SNAPSHOT_MAX}件保持されます。</div>
       </div>`,'閉じる',()=>closeModal(),true);
     document.getElementById('modal-foot').style.display='';
+    document.getElementById('modal-cancel').style.display='none';
     document.getElementById('modal-ok').textContent='閉じる';
     document.getElementById('modal-ok').onclick=()=>closeModal();
     return;
@@ -3304,6 +3310,7 @@ function openSnapshotModal(){
     </div>
   `,'閉じる',()=>closeModal(),true);
   document.getElementById('modal-foot').style.display='';
+  document.getElementById('modal-cancel').style.display='none';
   document.getElementById('modal-ok').textContent='閉じる';
   document.getElementById('modal-ok').onclick=()=>closeModal();
 }
@@ -3660,6 +3667,7 @@ function showShortcutHelp(){
     </table>
   `,'閉じる',()=>closeModal(),true);
   document.getElementById('modal-foot').style.display='';
+  document.getElementById('modal-cancel').style.display='none';
   document.getElementById('modal-ok').textContent='閉じる';
   document.getElementById('modal-ok').onclick=()=>closeModal();
 }
@@ -3689,6 +3697,7 @@ function openAppInfoModal(){
     </div>
   `,'閉じる',()=>closeModal(),true);
   document.getElementById('modal-foot').style.display='';
+  document.getElementById('modal-cancel').style.display='none';
   document.getElementById('modal-ok').textContent='閉じる';
   document.getElementById('modal-ok').onclick=()=>closeModal();
 }
